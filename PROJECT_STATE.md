@@ -31,7 +31,9 @@ Baseline: upstream fork main; this development branch now contains read-only MCP
 ## Current status
 - Implemented: isolated two-tool read-only Streamable HTTP endpoint with bearer guard.
 - Added: offline middleware/tool allowlist tests, Dockerfile.readonly, Render blueprint, cloud deployment instructions.
-- NOT VERIFIED: tests could not run because mcp is unavailable and PyPI DNS/network access failed in the execution environment.
+- VERIFIED IN GITHUB ACTIONS (2026-10-08): Python 3.11 read-only security/tool tests passed and Docker image build passed for commit 3caf9ddb59a3001bca28c5a2086c978f5be155b5. These are offline checks, not live protocol or Onshape integration tests.
+- NEW: .dockerignore excludes credential files, Git metadata, and CAD geometry from Docker build context. The updated image build has not yet been reverified.
 - NOT DEPLOYED: no Render account connection, Onshape credentials, HTTPS endpoint, or ChatGPT MCP connection has been configured.
 - Security: static bearer-token approach requires explicit compatibility verification; OAuth resource-server support is preferable before production use.
-- Next: run tests and MCP protocol handshake in a networked CI runner, audit API client credential handling, then stage cloud deployment.
+- Upstream/general Tests workflow currently fails lint with 1,061 findings in the broader codebase; separate from successful targeted read-only checks.
+- Next: reverify Docker build after .dockerignore, implement MCP protocol handshake integration test, audit credential handling, then stage cloud deployment.
