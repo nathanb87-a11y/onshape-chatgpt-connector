@@ -1,0 +1,33 @@
+# Prevent local secrets and development data from entering the cloud image.
+# Updated: 2026-10-08 (Central Time)
+.git
+.github
+.env
+.env.*
+!.env.example
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+*.pem
+*.key
+*.p12
+*.pfx
+*.stl
+*.step
+*.stp
+*.iges
+*.igs
+*.obj
+*.3mf
+*.zip
+*.tar
+*.tar.gz
+tests/
+docs/
+plots/
+out/
+outputs/
