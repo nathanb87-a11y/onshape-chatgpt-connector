@@ -19,6 +19,15 @@ load_dotenv()
 mcp = FastMCP("onshape-readonly", stateless_http=True, json_response=True)
 
 
+def _allowed_documents() -> set[str]:
+    ids = os.getenv("ONSHAPE_ALLOWED_DOCUMENT_IDS", "")
+    values = [value.strip() for value in ids.split(",")]
+    if not ids or any(len(value) != 24 or not all(ch in "0123456789abcdefABCDEF" for ch in value) for value in values):
+        raise RuntimeError("Configure valid ONSHAPE_ALLOWED_DOCUMENT_IDS")
+    return set(values)
+
+
+
 def _documents() -> DocumentManager:
     """Construct an API client without ever returning credentials to MCP."""
     access = os.getenv("ONSHAPE_ACCESS_KEY") or os.getenv("ONSHAPE_API_KEY")
@@ -33,7 +42,8 @@ async def list_documents(limit: int = 20) -> list[dict]:
     """List Onshape documents (read-only; maximum 50)."""
     if not 1 <= limit <= 50:
         raise ValueError("limit must be between 1 and 50")
-    docs = await _documents().list_documents(limit=limit)
+    allowed = _allowed_documents()
+    docs = [await _documents().get_document(doc_id) for doc_id in sorted(allowed)[:limit]]
     return [{"id": d.id, "name": d.name, "public": d.public} for d in docs]
 
 
@@ -42,6 +52,8 @@ async def get_document(document_id: str) -> dict:
     """Read a document's basic metadata; does not modify geometry."""
     if not document_id or len(document_id) > 128 or not document_id.isalnum():
         raise ValueError("Invalid document ID")
+    if document_id not in _allowed_documents():
+        raise ValueError("Document not authorized")
     d = await _documents().get_document(document_id)
     return {"id": d.id, "name": d.name, "public": d.public}
 
