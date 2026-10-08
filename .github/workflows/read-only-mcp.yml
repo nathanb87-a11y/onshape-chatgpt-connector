@@ -1,0 +1,57 @@
+# Automated checks for the isolated read-only MCP connector.
+# Updated: 2026-10-08 (Central Time).
+name: Read-only MCP checks
+
+on:
+  pull_request:
+    paths:
+      - "onshape_mcp/**"
+      - "tests/test_remote_readonly.py"
+      - "Dockerfile.readonly"
+      - ".github/workflows/read-only-mcp.yml"
+  push:
+    branches: [main, "agent/**"]
+    paths:
+      - "onshape_mcp/**"
+      - "tests/test_remote_readonly.py"
+      - "Dockerfile.readonly"
+      - ".github/workflows/read-only-mcp.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: readonly-mcp-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-tests:
+    name: Python 3.11 offline tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install read-only server and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "mcp>=1.10,<2" "httpx>=0.27,<1" "pydantic>=2,<3" "python-dotenv>=1,<2" "starlette>=0.27,<1" "uvicorn>=0.23,<1" "loguru>=0.7,<1" "pytest>=7,<10" "pytest-asyncio>=0.21,<2"
+      - name: Compile remote Python sources
+        run: python -m py_compile onshape_mcp/remote_readonly.py tests/test_remote_readonly.py
+      - name: Run isolated security and tool-registration tests
+        run: python -m pytest -q -o addopts='' tests/test_remote_readonly.py
+      - name: Verify server imports
+        run: python -c "from onshape_mcp.remote_readonly import app; assert app is not None"
+
+  docker-build:
+    name: Docker image builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build read-only image (no secrets)
+        run: docker build --file Dockerfile.readonly --tag onshape-readonly:ci .

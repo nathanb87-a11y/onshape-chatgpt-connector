@@ -1,0 +1,16 @@
+# Render Blueprint, updated 2026-10-08 Central Time
+# Do not commit secret values. Configure these as secret environment variables.
+services:
+  - type: web
+    name: onshape-chatgpt-readonly
+    runtime: docker
+    dockerfilePath: ./Dockerfile.readonly
+    plan: starter
+    autoDeployTrigger: off
+    envVars:
+      - key: ONSHAPE_ACCESS_KEY
+        sync: false
+      - key: ONSHAPE_SECRET_KEY
+        sync: false
+      - key: MCP_BEARER_TOKEN
+        sync: false
