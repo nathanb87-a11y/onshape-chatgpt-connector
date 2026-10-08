@@ -1,0 +1,10 @@
+# Read-only MCP pilot, updated 2026-10-08 Central Time
+FROM python:3.11-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY . /app
+RUN pip install --no-cache-dir "mcp>=1.10,<2" "httpx>=0.27,<1" "pydantic>=2,<3" "python-dotenv>=1,<2" "starlette>=0.27,<1" "uvicorn>=0.23,<1"
+RUN useradd --create-home --uid 10001 appuser
+USER appuser
+EXPOSE 3000
+CMD ["uvicorn", "onshape_mcp.remote_readonly:app", "--host", "0.0.0.0", "--port", "3000", "--proxy-headers", "--forwarded-allow-ips", "127.0.0.1"]
