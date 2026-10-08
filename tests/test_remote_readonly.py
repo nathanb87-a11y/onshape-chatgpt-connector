@@ -70,7 +70,7 @@ async def test_real_mcp_initialize_and_tool_discovery(monkeypatch):
         "MCP-Protocol-Version": "2025-03-26",
     }
     async with remote.mcp.session_manager.run():
-        async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as client:
             initialize = {
                 "jsonrpc": "2.0",
                 "id": 1,
@@ -103,7 +103,7 @@ async def test_real_mcp_rejects_unauthorized_initialize(monkeypatch):
     remote = importlib.import_module("onshape_mcp.remote_readonly")
     monkeypatch.setenv("MCP_BEARER_TOKEN", "t" * 40)
     transport = httpx.ASGITransport(app=remote.app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+    async with httpx.AsyncClient(transport=transport, base_url="http://localhost") as client:
         response = await client.post(
             "/mcp",
             headers={"Content-Type": "application/json", "Accept": "application/json"},
