@@ -5,6 +5,8 @@ No external network or Onshape credentials required.
 """
 import importlib
 
+import httpx
+
 import pytest
 from starlette.responses import PlainTextResponse
 
@@ -47,3 +49,64 @@ async def test_read_only_tool_allowlist():
     remote = importlib.import_module("onshape_mcp.remote_readonly")
     registered = remote.mcp._tool_manager.list_tools()
     assert {tool.name for tool in registered} == {"list_documents", "get_document"}
+
+
+@pytest.mark.asyncio
+async def test_real_mcp_initialize_and_tool_discovery(monkeypatch):
+    """Exercise JSON-RPC over actual ASGI HTTP transport, without Onshape keys.
+
+    Start the MCP session manager explicitly, as an ASGI server's lifespan
+    normally does. This catches protocol and startup problems that a simple
+    tool-registry inspection cannot detect.
+    """
+    remote = importlib.import_module("onshape_mcp.remote_readonly")
+    token = "t" * 40
+    monkeypatch.setenv("MCP_BEARER_TOKEN", token)
+    transport = httpx.ASGITransport(app=remote.app)
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json, text/event-stream",
+        "Content-Type": "application/json",
+        "MCP-Protocol-Version": "2025-03-26",
+    }
+    async with remote.mcp.session_manager.run():
+        async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+            initialize = {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2025-03-26",
+                    "capabilities": {},
+                    "clientInfo": {"name": "offline-ci", "version": "1.0"},
+                },
+            }
+            response = await client.post("/mcp", headers=headers, json=initialize)
+            assert response.status_code == 200, response.text
+            result = response.json()
+            assert result["result"]["serverInfo"]["name"] == "onshape-readonly"
+            assert "error" not in result
+
+            discovered = await client.post(
+                "/mcp",
+                headers=headers,
+                json={"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+            )
+            assert discovered.status_code == 200, discovered.text
+            names = {tool["name"] for tool in discovered.json()["result"]["tools"]}
+            assert names == {"list_documents", "get_document"}
+
+
+@pytest.mark.asyncio
+async def test_real_mcp_rejects_unauthorized_initialize(monkeypatch):
+    """Verify the authentication middleware also protects the real MCP route."""
+    remote = importlib.import_module("onshape_mcp.remote_readonly")
+    monkeypatch.setenv("MCP_BEARER_TOKEN", "t" * 40)
+    transport = httpx.ASGITransport(app=remote.app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        response = await client.post(
+            "/mcp",
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+        )
+        assert response.status_code == 401
