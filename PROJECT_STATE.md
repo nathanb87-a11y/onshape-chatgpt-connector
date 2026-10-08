@@ -32,8 +32,9 @@ Baseline: upstream fork main; this development branch now contains read-only MCP
 - Implemented: isolated two-tool read-only Streamable HTTP endpoint with bearer guard.
 - Added: offline middleware/tool allowlist tests, Dockerfile.readonly, Render blueprint, cloud deployment instructions.
 - VERIFIED IN GITHUB ACTIONS (2026-10-08): Python 3.11 read-only security/tool tests passed and Docker image build passed for commit 3caf9ddb59a3001bca28c5a2086c978f5be155b5. These are offline checks, not live protocol or Onshape integration tests.
-- NEW: .dockerignore excludes credential files, Git metadata, and CAD geometry from Docker build context. The updated image build has not yet been reverified.
+- VERIFIED on commit 537c465d35eabfd9ba86112f2c5e02af1a8025bb: Python 3.11 tests (including real in-process MCP initialize and tools/list) and Docker image build passed. The .dockerignore change was included.
 - NOT DEPLOYED: no Render account connection, Onshape credentials, HTTPS endpoint, or ChatGPT MCP connection has been configured.
 - Security: static bearer-token approach requires explicit compatibility verification; OAuth resource-server support is preferable before production use.
 - Upstream/general Tests workflow currently fails lint with 1,061 findings in the broader codebase; separate from successful targeted read-only checks.
-- Next: reverify Docker build after .dockerignore, implement MCP protocol handshake integration test, audit credential handling, then stage cloud deployment.
+- AUDITED: docs/CLOUD_DEPLOYMENT.md now identifies public-host transport validation, ChatGPT authentication compatibility, shared-identity document authorization, TLS/proxy configuration, and secret management as release gates.
+- Next: implement explicit public-host transport configuration and document access restrictions, validate authentication mode against ChatGPT, then stage a secure deployment with user-managed secrets.
