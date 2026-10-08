@@ -45,5 +45,5 @@ async def test_weak_server_token_is_rejected(monkeypatch):
 @pytest.mark.asyncio
 async def test_read_only_tool_allowlist():
     remote = importlib.import_module("onshape_mcp.remote_readonly")
-    registered = await remote.mcp._tool_manager.list_tools()
+    registered = remote.mcp._tool_manager.list_tools()
     assert {tool.name for tool in registered} == {"list_documents", "get_document"}
