@@ -6,7 +6,7 @@ Updated: 2026-10-08 (Central Time)
 Repository: nathanb87-a11y/onshape-chatgpt-connector
 Fork upstream: ReshefElisha/jarvis-onshape-mcp
 Upstream foundation credited in NOTICE: hedless/onshape-mcp
-Baseline: unmodified fork main at project initialization; this branch adds documentation only.
+Baseline: upstream fork main; this development branch now contains read-only MCP pilot code, offline tests, and deployment scaffolding.
 
 ## Verified by repository inspection
 - Fork exists and GitHub reports write access.
@@ -29,4 +29,9 @@ Baseline: unmodified fork main at project initialization; this branch adds docum
 6. Document deployment, rollback, and reproducible smoke tests.
 
 ## Current status
-Documentation baseline only. No runtime implementation changed in this branch.
+- Implemented: isolated two-tool read-only Streamable HTTP endpoint with bearer guard.
+- Added: offline middleware/tool allowlist tests, Dockerfile.readonly, Render blueprint, cloud deployment instructions.
+- NOT VERIFIED: tests could not run because mcp is unavailable and PyPI DNS/network access failed in the execution environment.
+- NOT DEPLOYED: no Render account connection, Onshape credentials, HTTPS endpoint, or ChatGPT MCP connection has been configured.
+- Security: static bearer-token approach requires explicit compatibility verification; OAuth resource-server support is preferable before production use.
+- Next: run tests and MCP protocol handshake in a networked CI runner, audit API client credential handling, then stage cloud deployment.
